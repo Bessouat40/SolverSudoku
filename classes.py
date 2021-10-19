@@ -97,6 +97,15 @@ class Solver:
 if __name__ == "__main__":
 
     solver = Solver()
+    grille = [[0,4,0,1,0,0,0,0,0], 
+              [0,0,3,5,0,0,0,1,9],
+              [0,0,0,0,0,6,0,0,3],
+              [0,0,7,0,0,5,0,0,8],
+              [0,8,1,0,0,0,9,6,0],
+              [9,0,0,2,0,0,7,0,0],
+              [6,0,0,9,0,0,0,0,0],
+              [8,1,0,0,0,2,4,0,0],
+              [0,0,0,0,0,4,0,9,0]]
     sudoku = [[i for i in range(1,10)] for i in range(1,10)]
     solver.ajoutSudoku(sudoku)
     solver.printSudoku()
@@ -106,4 +115,4 @@ if __name__ == "__main__":
     print('carre 1 : ' + str(solver.verifCarre(1)))
     print('possibilites : ' )
     solver.modifPossiCarre(1,0,[0,0])
-    solver.printPossibilites()
+    print(solver.possibilite)
