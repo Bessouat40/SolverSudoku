@@ -3,7 +3,7 @@ import numpy as np
 class Solver:
     def __init__(self, sudoku = [[0 for i in range(9)]for i in range(9)]) : 
         self.sudoku = sudoku
-        self.possibilite = [[[i for i in range(1,10)]for i in range(9)] for i in range(9)]
+        self.possibilite = [[[1 for i in range(1,10)]for i in range(9)] for i in range(9)]
 
     def getSudoku(self) :
         return self.sudoku
@@ -34,16 +34,19 @@ class Solver:
         print('\n')
 
     def verifLigne(self, i) :
+        #Vérifier si la ligne a tous les numéros
         ligne = self.getSudoku()[i]
         verif = [i for i in range(1,10)]
         return sorted(verif) == sorted(ligne)
 
     def verifColonne(self, i) :
+        # Vérifier si la colonne a tous les numéros
         colonne = np.array(self.getSudoku())[:,i]        
         verif = [i for i in range(1,10)]
         return sorted(verif) == sorted(colonne)
     
     def verifCarre(self, i) :
+        # Vérifier si le carré a tous les numéros
         indices = [i*3, i*3+1, i*3+2]
         verif = [i for i in range(1,10)]
         carre = []
@@ -61,39 +64,53 @@ class Solver:
         else : self.sudoku = sudoku
 
     def modifPossiLigne(self, val, ligne, pos) :
+        #On modofie les posisbilité de la ligne en fonction de la valeur posée
         possi = self.getPossibilites()[ligne]
         for i in range(len(possi)) :
-            if i == pos : None
-            else :
-                x = possi[i]
-                x[val-1] = 0 # val-1 car on commence à 0
-                possi[i] = x
+            x = possi[i]
+            x[val-1] = 0 # val-1 car on commence à 0
+            possi[i] = x
         self.possibilite[ligne] = possi
 
     def modifPossiCol(self, val, col, pos) :
         possi = np.asarray(self.getPossibilites())[:,col]
         for i in range(len(possi)) :
-            if i == pos : None
-            else :
-                x = possi[i]
-                x[val-1] = 0 # val-1 car on commence à 0
-                possi[i] = x
+            x = possi[i]
+            x[val-1] = 0 # val-1 car on commence à 0
+            possi[i] = x
         for count, val in enumerate(self.possibilite) :
             val[col] = list(possi[count])
+
+    def retrouveCarre(self, position):
+        None
 
     def modifPossiCarre(self, val, num_carre, pos) :
         carre = np.array(self.getCarre(num_carre))
         indices = [num_carre*3, num_carre*3+1, num_carre*3+2]
         for i in range(len(carre)) :
             for j in range(len(carre[0])) :
-                if [i,j] == pos : None 
-                else : 
-                    carre[i,j][val-1] = 0
+                carre[i,j][val-1] = 0
                 carre[i,j] = list(carre[i,j])
         for i, j in enumerate(indices) :
             self.possibilite[j][num_carre*3:num_carre*3+3] = list(carre[i])
-        
 
+    def miseAJour(self, val, position):
+        self.modifPossiCarre(val,self.retrouveCarre(position), self.possibilite)
+        self.modifPossiLigne(val,position[1],self.possibilite)
+        self.modifPossiCol(val,position[2], self.possibilite)
+
+    def sommerValeursPossibles(self):
+        return [np.sum(self.possibilite)]
+
+    def acTrois(self):
+        None
+    def mrv(self):
+        None
+
+    def degreeHeuristic(self):
+        None
+    def leastConstraining(self):
+        None
 if __name__ == "__main__":
 
     solver = Solver()
@@ -116,3 +133,5 @@ if __name__ == "__main__":
     print('possibilites : ' )
     solver.modifPossiCarre(1,0,[0,0])
     print(solver.possibilite)
+
+    print(solver.sommerValeursPossibles())
