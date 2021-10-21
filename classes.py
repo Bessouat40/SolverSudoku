@@ -81,8 +81,9 @@ class Solver:
         for count, val in enumerate(self.possibilite) :
             val[col] = list(possi[count])
 
-    def retrouveCarre(self, position):
-        None
+    def retrouveCarre(self, x,y):
+        carre = (y//3)*3+1+x//3
+        return carre
 
     def modifPossiCarre(self, val, num_carre, pos) :
         carre = np.array(self.getCarre(num_carre))
@@ -100,15 +101,103 @@ class Solver:
         self.modifPossiCol(val,position[2], self.possibilite)
 
     def sommerValeursPossibles(self):
-        return [np.sum(self.possibilite)]
+        return np.sum(self.possibilite, axis=1)
+
+    def compterZeroSudoku(self,m):
+        nb_zeros = len(np.where(m == 0)[0])
+        return nb_zeros
 
     def acTrois(self):
         None
+
     def mrv(self):
+        liste = self.possibilite
+        min = 10
+        position=[0,0]
+        for i in range (len(liste)) :
+            for j in range (len(liste)) :
+                if np.sum(liste[i][j])<min and np.sum(liste[i][j])>0 :
+                    min=np.sum(liste[i][j])
+                    position[0]=i
+                    position[1]=j
+        return position
+
+        """    def mrv(self):
+        liste = self.sommerValeursPossibles()
+        zero_possi = self.compterZeroSudoku(self.sommerValeursPossibles())
+        zero_sudo = self.compterZeroSudoku(self.sudoku)
+        while zero_possi > 0 and zero_sudo > 0 :
+            position = self.rechercheMin(liste)
+            
+            #self.sudoku[position[0]][position[1]] = np.nonzero(self.possibilite[position[0]][position[1]])[0][0])"""
+
+    def compterPossibiliteZeroLigne(self, ligne) :
+        #On compte le nombre de case dans une ligne où il est impossible de rentrer une valeur
+        possi = self.possibilite[ligne]
+        compte = 0
+        for k in range (len(possi)):
+            if possi[k].count(0) == 9:
+                compte += 1
+        return compte
+
+    def compterZeroColonne(self,col):
+        possi = np.asarray(self.getPossibilites())[:,col]
+        compte = 0
+        for k in range(len(possi)):
+            if possi[k].count(0) == 9:
+                compte += 1
+        return compte
+
+    def compterZeroCarre(self,num_carre):
+        carre = np.array(self.getCarre(num_carre))
+        compte = 0
+        for i in range(len(carre)):
+            if carre[i].count(0) == 9:
+                compte += 1
+        return compte
+
+    def sommerZeroCarre(self,num_carre):
+        #On compte le nombre de possibilité dans un carré
+        carre = np.array(self.getCarre(num_carre))
+        compte = 0
+        for i in range(len(carre)):
+            compte += np.sum(carre[i])
+
+        return compte
+
+    def sommerPossiLigne(self, ligne):
+        somme = 0
+        for k in range (len(self.possibilite[ligne])) :
+            somme += np.sum(self.possibilite[ligne][k])
+
+        return somme
+
+    def sommerPossiCol(self, col):
+        somme = 0
+        for k in range(len(self.possibilite[col])):
+            somme += np.sum(self.possibilite[k][col])
+
+        return somme
+
+    def sommerPossiCarre(selfself, num_carre):
         None
 
     def degreeHeuristic(self):
-        None
+        #A TESTER
+        nbre_contrainte=[[0 for i in range(9)]for i in range(9)]
+        for i in range (len(self.sudoku)):
+            for j in range (len(self.sudoku)):
+                num_carre = self.retrouveCarre(i,j)
+                #PROBLEME PAR LA A MON AVIS
+                calcul_contrainte =  self.compterZeroColonne(j) + self.compterPZeroLigne(i)
+                calcul_contrainte += self.sommerZeroCarre(num_carre)
+                calcul_contrainte += -8*3 - np.sum(self.possibilite[i][j])
+                calcul_contrainte += self.sommerPossiLigne(i) + self.sommerPossiCol(j) +self.sommerPossiCarre(num_carre)
+                nbre_contrainte[i][j]=calcul_contrainte
+        return np.argmin(nbre_contrainte)
+
+
+
     def leastConstraining(self):
         None
 if __name__ == "__main__":
