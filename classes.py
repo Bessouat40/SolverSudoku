@@ -6,6 +6,13 @@ class Solver:
         self.sudoku = sudoku
         self.possibilite = [[[1 for i in range(1, 10)] for i in range(9)] for i in range(9)]
 
+    def initPossi(self):
+        for i in range (len(grille)):
+            for j in range (len(grille)):
+                if grille[i][j] != 0 :
+                    self.possibilite[i][j]=[0 for i in range(1,10)]
+
+
     def getSudoku(self):
         return self.sudoku
 
@@ -138,7 +145,7 @@ class Solver:
             
             #self.sudoku[position[0]][position[1]] = np.nonzero(self.possibilite[position[0]][position[1]])[0][0])"""
 
-    def compterPossibiliteZeroLigne(self, ligne):
+    def compterZeroLigne(self, ligne):
         # On compte le nombre de case dans une ligne où il est impossible de rentrer une valeur
         possi = self.possibilite[ligne]
         compte = 0
@@ -148,7 +155,8 @@ class Solver:
         return compte
 
     def compterZeroColonne(self, col):
-        possi = np.asarray(self.getPossibilites())[:, col]
+        possi = self.possibilite[:,col]
+        print(possi)
         compte = 0
         for k in range(len(possi)):
             if possi[k].count(0) == 9:
@@ -228,14 +236,16 @@ if __name__ == "__main__":
               [8, 1, 0, 0, 0, 2, 4, 0, 0],
               [0, 0, 0, 0, 0, 4, 0, 9, 0]]
     sudoku = [[i for i in range(1, 10)] for i in range(1, 10)]
-    solver.ajoutSudoku(sudoku)
+    solver.ajoutSudoku(grille)
     solver.printSudoku()
     print('\n')
-    print('ligne 1 : ' + str(solver.verifLigne(1)))
+    """print('ligne 1 : ' + str(solver.verifLigne(1)))
     print('colonne 1 : ' + str(solver.verifColonne(1)))
     print('carre 1 : ' + str(solver.verifCarre(1)))
     print('possibilites : ')
     solver.modifPossiCarre(1, 0, [0, 0])
     print(solver.possibilite)
 
-    print(solver.sommerValeursPossibles())
+    print(solver.sommerValeursPossibles())"""
+    solver.initPossi()
+    print(solver.compterZeroColonne(0))
