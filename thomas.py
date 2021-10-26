@@ -36,6 +36,14 @@ class Solver:
         indices = [[x + i, y + j] for i in range(3) for j in range(3)]
         return indices
 
+    def zero_sudo(self) :
+        pos = []
+        for i in range(self.sudoku) :
+            for j in range(self.sudoku[0]) :
+                if self.sudoku[i,j] == 0 :
+                    pos.append([i,j])
+        return pos
+
     def printSudoku(self):
         for k, i in enumerate(self.getSudoku()):
             if k%3 == 0 :
@@ -257,9 +265,6 @@ class Solver:
                 nbre_contrainte[i][j] = calcul_contrainte
         return self.indiceMax(nbre_contrainte)
 
-    def leastConstraining(self):
-        None
-
 
 if __name__ == "__main__":
     solver = Solver()
@@ -286,4 +291,5 @@ if __name__ == "__main__":
     print(solver.possibilite)
     print(solver.sommerValeursPossibles())"""
     solver.InitPossi()
+    print(solver.possibilite[4][3])
     solver.printPossibilites()
