@@ -30,6 +30,13 @@ class Solver:
             carre.append(ligne)
         return carre
 
+    def getIndicesCarre(self, n):
+        n2 = n - 1
+        x = (n2 % 3) * 3
+        y = (n2 // 3) * 3
+        indices = [[x + i, y + j] for i in range(3) for j in range(3)]
+        return indices
+
     def printSudoku(self):
         for i in self.getSudoku():
             print('---' * 9)
@@ -103,11 +110,7 @@ class Solver:
 
     def modifPossiCarre(self, val, num_carre, pos):
         carre = np.array(self.getCarre(num_carre))
-        indices = [num_carre * 3, num_carre * 3 + 1, num_carre * 3 + 2]
-        for i in range(len(carre)):
-            for j in range(len(carre[0])):
-                carre[i, j][val - 1] = 0
-                carre[i, j] = list(carre[i, j])
+        indices = self.getIndicesCarre(num_carre)
         for i, j in enumerate(indices):
             self.possibilite[j][num_carre * 3:num_carre * 3 + 3] = list(carre[i])
 

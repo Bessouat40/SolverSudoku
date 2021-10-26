@@ -28,6 +28,7 @@ class Solver:
             carre.append(ligne)
         return carre
 
+
     def printSudoku(self):
         for i in self.getSudoku():
             print('---' * 9)
