@@ -1,0 +1,32 @@
+    def degreeHeuristic(self, arg):
+        # A TESTER
+        nbre_contrainte = [[0 for i in range(9)] for i in range(9)]
+        for k in range(len(arg)):
+            i = arg[k][0]
+            j=arg[k][1]
+            num_carre = self.retrouveCarre(arg[k][0], arg[k][1])
+            # PROBLEME PAR LA A MON AVIS
+            calcul_contrainte = self.compterZeroColonne(j) + self.compterPZeroLigne(i)
+            calcul_contrainte += self.sommerZeroCarre(num_carre)
+            calcul_contrainte += -8 * 3 - np.sum(self.possibilite[i][j])
+            calcul_contrainte += self.sommerPossiLigne(i) + self.sommerPossiCol(j) + self.sommerPossiCarre(
+                num_carre)
+            nbre_contrainte[i][j] = calcul_contrainte
+        return self.indiceMin(nbre_contrainte)
+    
+    
+    def leastConstraining(self, arg):
+        # A TESTER
+        nbre_contrainte = [[0 for i in range(9)] for i in range(9)]
+        for k in range(len(arg)):
+            i = arg[k][0]
+            j = arg[k][1]
+            num_carre = self.retrouveCarre(i, j)
+            # PROBLEME PAR LA A MON AVIS
+            calcul_contrainte = self.compterZeroColonne(j) + self.compterPZeroLigne(i)
+            calcul_contrainte += self.sommerZeroCarre(num_carre)
+            calcul_contrainte += -8 * 3 - np.sum(self.possibilite[i][j])
+            calcul_contrainte += self.sommerPossiLigne(i) + self.sommerPossiCol(j) + self.sommerPossiCarre(
+                num_carre)
+            nbre_contrainte[i][j] = calcul_contrainte
+        return self.indiceMax(nbre_contrainte)
