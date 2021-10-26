@@ -7,13 +7,13 @@ class Solver:
         self.possibilite = [[[1 for i in range(1, 10)] for i in range(9)] for i in range(9)]
 
     def initPossi(self):
-        for i in range (len(self.sudoku)):
-            for j in range (len(self.sudoku)):
-                if self.sudoku[i][j] != 0 :
-                    self.possibilite[i][j]=[0 for i in range(1,10)]
-                    #self.modifPossiLigne(self.sudoku[i][j],i,self.possibilite)
-                    #self.modifPossiCol(self.sudoku[i][j],j,self.possibilite)
-                    self.modifPossiCarre(self.sudoku[i][j],self.retrouveCarre(i,j),self.possibilite)
+        for i in range(len(self.sudoku)):
+            for j in range(len(self.sudoku)):
+                if self.sudoku[i][j] != 0:
+                    self.possibilite[i][j] = [0 for i in range(1, 10)]
+                    self.modifPossiLigne(self.sudoku[i][j],i,self.possibilite)
+                    self.modifPossiCol(self.sudoku[i][j],j,self.possibilite)
+                    self.modifPossiCarre(self.sudoku[i][j], self.retrouveCarre(j, i), self.possibilite)
 
     def getSudoku(self):
         return self.sudoku
@@ -96,7 +96,7 @@ class Solver:
             x = possi[i]
             x[val - 1] = 0  # val-1 car on commence à 0
             possi[i] = x
-            self.possibilite[i][col][val-1]=0
+            self.possibilite[i][col][val - 1] = 0
         # for count, val in enumerate(self.possibilite):
         #     val[col] = list(possi[count])
 
@@ -105,18 +105,17 @@ class Solver:
         return carre
 
     def posCarre(self, nb_carre):
-        x = ((nb_carre - 1)%3)*3
-        y = (((nb_carre-1)//3))*3
-        return x,y
+        x = ((nb_carre - 1) % 3) * 3
+        y = (((nb_carre - 1) // 3)) * 3
+        return x, y
 
     def modifPossiCarre(self, val, num_carre, pos):
         carre = np.array(self.getCarre(num_carre))
         indice = np.array(self.getIndicesCarre(num_carre))
-        for i in range (len(carre)) :
-            carre[i][val-1]=0
-        for j in range (len(carre)) :
-
-            self.possibilite[indice[j][1]][indice[j][0]]=carre[j]
+        for i in range(len(carre)):
+            carre[i][val - 1] = 0
+        for j in range(len(carre)):
+            self.possibilite[indice[j][1]][indice[j][0]] = carre[j]
 
         """indices = [num_carre % 3, num_carre % 3 + 1, num_carre % 3 + 2]
         for i in range(len(carre)):
@@ -149,24 +148,23 @@ class Solver:
             for j in range(len(liste)):
                 if np.sum(liste[i][j]) < min and np.sum(liste[i][j]) > 0:
                     min = np.sum(liste[i][j])
-                    position = [[i,j]]
+                    position = [[i, j]]
                 elif np.sum(liste[i][j]) == min and np.sum(liste[i][j]) > 0:
                     min.append(np.sum(liste[i][j]))
-                    position.append([i,j])
+                    position.append([i, j])
         return position
 
-    def AC3(self, pos, val) :
+    def AC3(self, pos, val):
         self.modifPossiLigne(pos[0], val)
         self.modifPossiCol(pos[1], val)
         self.modifPossiCarre(pos, val)
 
-    def InitPossi(self) :
+    def InitPossi(self):
         self.possibilite = [[[1 for i in range(1, 10)] for i in range(9)] for i in range(9)]
-        for i in range(len(self.sudoku)) :
-            for j in range(len(self.sudoku[0])) :
-                if self.sudoku[i][j] != 0 :
-                    self.AC3([i,j], self.sudoku[i][j])
-
+        for i in range(len(self.sudoku)):
+            for j in range(len(self.sudoku[0])):
+                if self.sudoku[i][j] != 0:
+                    self.AC3([i, j], self.sudoku[i][j])
 
     def compterZeroLigne(self, ligne):
         # On compte le nombre de case dans une ligne où il est impossible de rentrer une valeur
@@ -178,7 +176,7 @@ class Solver:
         return compte
 
     def compterZeroColonne(self, col):
-        possi = self.possibilite[:,col]
+        possi = self.possibilite[:, col]
         print(possi)
         compte = 0
         for k in range(len(possi)):
@@ -190,7 +188,7 @@ class Solver:
         carre = np.array(self.getCarre(num_carre))
         compte = 0
         for i in range(len(carre)):
-            for j in i :
+            for j in i:
                 if i.count(0) == 9:
                     compte += 1
         return compte
@@ -222,28 +220,27 @@ class Solver:
         s = 0
         carre = np.array(self.getCarre(num_carre))
         for i in range(len(carre)):
-            for j in i :
-                s += sum(j)                    
+            for j in i:
+                s += sum(j)
         return s
 
     def indicesMax(self, tableau):
-        max=np.max(tableau)
-        position=[]
-        for i in range(len(tableau)) :
-            for j in range (len(tableau)):
+        max = np.max(tableau)
+        position = []
+        for i in range(len(tableau)):
+            for j in range(len(tableau)):
                 if max == tableau[i][j]:
-                    position.append([i,j])
+                    position.append([i, j])
         return position
 
     def indicesMin(self, tableau):
-        min=np.min(tableau)
-        position=[]
-        for i in range(len(tableau)) :
-            for j in range (len(tableau)):
+        min = np.min(tableau)
+        position = []
+        for i in range(len(tableau)):
+            for j in range(len(tableau)):
                 if min == tableau[i][j]:
-                    position.append([i,j])
+                    position.append([i, j])
         return position
-
 
     def degreeHeuristic(self):
         # A TESTER
@@ -303,4 +300,3 @@ if __name__ == "__main__":
     print(solver.possibilite)
     print(solver.sommerValeursPossibles())"""
     solver.initPossi()
-    print(solver.possibilite[0][7])
