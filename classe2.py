@@ -11,8 +11,8 @@ class Solver:
             for j in range (len(self.sudoku)):
                 if self.sudoku[i][j] != 0 :
                     self.possibilite[i][j]=[0 for i in range(1,10)]
-                    self.modifPossiLigne(self.sudoku[i][j],i,self.possibilite)
-                    self.modifPossiCol(self.sudoku[i][j],j,self.possibilite)
+                    #self.modifPossiLigne(self.sudoku[i][j],i,self.possibilite)
+                    #self.modifPossiCol(self.sudoku[i][j],j,self.possibilite)
                     self.modifPossiCarre(self.sudoku[i][j],self.retrouveCarre(i,j),self.possibilite)
 
     def getSudoku(self):
@@ -22,12 +22,11 @@ class Solver:
         return self.possibilite
 
     def getCarre(self, i):
-        indices = [i * 3, i * 3 + 1, i * 3 + 2]
-        carre = []
+        indices = self.getIndicesCarre(i)
         sudoku = self.getPossibilites()
-        for j in indices:
-            ligne = sudoku[j][i * 3:i * 3 + 3]
-            carre.append(ligne)
+        carre = []
+        for l in indices:
+            carre.append(sudoku[l[1]][l[0]])
         return carre
 
     def getIndicesCarre(self, n):
@@ -91,13 +90,15 @@ class Solver:
         self.possibilite[ligne] = possi
 
     def modifPossiCol(self, val, col, pos):
+
         possi = np.asarray(self.getPossibilites())[:, col]
         for i in range(len(possi)):
             x = possi[i]
             x[val - 1] = 0  # val-1 car on commence à 0
             possi[i] = x
-        for count, val in enumerate(self.possibilite):
-            val[col] = list(possi[count])
+            self.possibilite[i][col][val-1]=0
+        # for count, val in enumerate(self.possibilite):
+        #     val[col] = list(possi[count])
 
     def retrouveCarre(self, x, y):
         carre = (y // 3) * 3 + 1 + x // 3
@@ -110,9 +111,20 @@ class Solver:
 
     def modifPossiCarre(self, val, num_carre, pos):
         carre = np.array(self.getCarre(num_carre))
-        indices = self.getIndicesCarre(num_carre)
+        indice = np.array(self.getIndicesCarre(num_carre))
+        for i in range (len(carre)) :
+            carre[i][val-1]=0
+        for j in range (len(carre)) :
+
+            self.possibilite[indice[j][1]][indice[j][0]]=carre[j]
+
+        """indices = [num_carre % 3, num_carre % 3 + 1, num_carre % 3 + 2]
+        for i in range(len(carre)):
+            for j in range(len(carre[0])):
+                carre[i][j][val - 1] = 0
+                carre[i][j] = list(carre[i, j])
         for i, j in enumerate(indices):
-            self.possibilite[j][num_carre * 3:num_carre * 3 + 3] = list(carre[i])
+            self.possibilite[j][num_carre % 3:num_carre % 3 + 3] = list(carre[i])"""
 
     def miseAJour(self, val, position):
         self.modifPossiCarre(val, self.retrouveCarre(position), self.possibilite)
@@ -291,3 +303,4 @@ if __name__ == "__main__":
     print(solver.possibilite)
     print(solver.sommerValeursPossibles())"""
     solver.initPossi()
+    print(solver.possibilite[0][7])
