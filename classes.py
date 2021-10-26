@@ -126,16 +126,30 @@ class Solver:
 
     def mrv(self):
         liste = self.possibilite
-        min = 10
-        position = [0, 0]
+        min = [10]
+        position = [[0, 0]]
         for i in range(len(liste)):
             for j in range(len(liste)):
                 if np.sum(liste[i][j]) < min and np.sum(liste[i][j]) > 0:
                     min = np.sum(liste[i][j])
-                    position[0] = i
-                    position[1] = j
+                    position = [[i,j]]
+                elif np.sum(liste[i][j]) == min and np.sum(liste[i][j]) > 0:
+                    min.append(np.sum(liste[i][j]))
+                    position.append([i,j])
         return position
 
+    def AC3(self, pos, val) :
+        self.modifPossiLigne(pos[0], val)
+        self.modifPossiCol(pos[1], val)
+        self.modifPossiCarre(pos, val)
+
+    def InitPossi(self) :
+        self.possibilite = [[[1 for i in range(1, 10)] for i in range(9)] for i in range(9)]
+        for i in range(len(self.sudoku)) :
+            for j in range(len(self.sudoku[0])) :
+                if self.sudoku[i][j] != 0 :
+                    self.AC3([i,j], self.sudoku[i][j])
+                
         """    def mrv(self):
         liste = self.sommerValeursPossibles()
         zero_possi = self.compterZeroSudoku(self.sommerValeursPossibles())
@@ -167,8 +181,9 @@ class Solver:
         carre = np.array(self.getCarre(num_carre))
         compte = 0
         for i in range(len(carre)):
-            if carre[i].count(0) == 9:
-                compte += 1
+            for j in i :
+                if i.count(0) == 9:
+                    compte += 1
         return compte
 
     def sommerZeroCarre(self, num_carre):
@@ -194,18 +209,16 @@ class Solver:
 
         return somme
 
-
-
     def sommerPossiCarre(self, num_carre):
         s = 0
-        x,y = self.posCarre(num_carre)
-        for i in range(3):
-            for j in range(3):
-                s+=np.sum(self.possibilite[y+i,x+j])
+        carre = np.array(self.getCarre(num_carre))
+        for i in range(len(carre)):
+            for j in i :
+                s += sum(j)                    
         return s
 
 
-    def degreeHeuristic(self):
+    def degreeHeuristic(self, ):
         # A TESTER
         nbre_contrainte = [[0 for i in range(9)] for i in range(9)]
         for i in range(len(self.sudoku)):
@@ -235,6 +248,7 @@ if __name__ == "__main__":
               [6, 0, 0, 9, 0, 0, 0, 0, 0],
               [8, 1, 0, 0, 0, 2, 4, 0, 0],
               [0, 0, 0, 0, 0, 4, 0, 9, 0]]
+
     sudoku = [[i for i in range(1, 10)] for i in range(1, 10)]
     solver.ajoutSudoku(grille)
     solver.printSudoku()
@@ -245,7 +259,5 @@ if __name__ == "__main__":
     print('possibilites : ')
     solver.modifPossiCarre(1, 0, [0, 0])
     print(solver.possibilite)
-
     print(solver.sommerValeursPossibles())"""
     solver.initPossi()
-    print(solver.compterZeroColonne(0))
