@@ -30,3 +30,23 @@
                 num_carre)
             nbre_contrainte[i][j] = calcul_contrainte
         return self.indiceMax(nbre_contrainte)
+        
+        
+            def indicesMax(self, tableau):
+        max = np.max(tableau)
+        position = []
+        for i in range(len(tableau)):
+            for j in range(len(tableau)):
+                if max == tableau[i][j]:
+                    position.append([i, j])
+        return position
+
+
+    def indicesMin(self, tableau):
+        min = np.min(tableau)
+        position = []
+        for i in range(len(tableau)):
+            for j in range(len(tableau)):
+                if min == tableau[i][j]:
+                    position.append([i, j])
+        return position
