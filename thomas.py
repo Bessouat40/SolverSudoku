@@ -1,10 +1,11 @@
 import numpy as np
-
+import sys
 
 class Solver:
     def __init__(self, sudoku=[[0 for i in range(9)] for i in range(9)]):
         self.sudoku = sudoku
         self.possibilite = [[[1 for i in range(1, 10)] for i in range(9)] for i in range(9)]
+        self.count = 0
 
     def InitPossi(self) :
         for i in range(len(self.sudoku)) :
@@ -38,9 +39,9 @@ class Solver:
 
     def zero_sudo(self) :
         pos = []
-        for i in range(self.sudoku) :
-            for j in range(self.sudoku[0]) :
-                if self.sudoku[i,j] == 0 :
+        for i in range(len(self.sudoku)) :
+            for j in range(len(self.sudoku[0])) :
+                if self.sudoku[i][j] == 0 :
                     pos.append([i,j])
         return pos
 
@@ -92,20 +93,20 @@ class Solver:
         else:
             self.sudoku = sudoku
 
-    def modifPossiLigne(self, ligne, val):
+    def modifPossiLigne(self, ligne, val, remp):
         # On modofie les posisbilité de la ligne en fonction de la valeur posée
         possi = self.getPossibilites()[ligne]
         for i in range(len(possi)):
             x = possi[i]
-            x[val - 1] = 0  # val-1 car on commence à 0
+            x[val - 1] = remp  # val-1 car on commence à 0
             possi[i] = x
         self.possibilite[ligne] = possi
 
-    def modifPossiCol(self, col, val):
+    def modifPossiCol(self, col, val, remp):
         possi = np.asarray(self.getPossibilites())[:, col]
         for i in range(len(possi)):
             x = possi[i]
-            x[val - 1] = 0  # val-1 car on commence à 0
+            x[val - 1] = remp  # val-1 car on commence à 0
             possi[i] = x
             self.possibilite[i][col][val-1]=0
         # for count, val in enumerate(self.possibilite):
@@ -120,12 +121,12 @@ class Solver:
         y = (((nb_carre-1)//3))*3
         return x,y
 
-    def modifPossiCarre(self, pos, val):
+    def modifPossiCarre(self, pos, val, remp):
         num_carre = self.retrouveCarre(pos[0], pos[1])
         carre = self.getCarre(num_carre)
         indice = self.getIndicesCarre(num_carre)
         for i in range (len(carre)) :
-            carre[i][val-1]=0
+            carre[i][val-1]=remp
         for j in range (len(carre)) :
             self.possibilite[indice[j][1]][indice[j][0]]=carre[j]
 
@@ -139,24 +140,28 @@ class Solver:
     def acTrois(self):
         None
 
-    def mrv(self):
-        liste = self.possibilite
-        min = [10]
-        position = [[0, 0]]
-        for i in range(len(liste)):
-            for j in range(len(liste)):
-                if np.sum(liste[i][j]) < min and np.sum(liste[i][j]) > 0:
-                    min = np.sum(liste[i][j])
-                    position = [[i,j]]
-                elif np.sum(liste[i][j]) == min and np.sum(liste[i][j]) > 0:
-                    min.append(np.sum(liste[i][j]))
-                    position.append([i,j])
-        return position
+    def mrv(self, arg):
+            min = 10000
+            position = []
+            for i in arg:
+                sum_possi = np.sum(self.possibilite[i[0]][i[1]])
+                if sum_possi < min and sum_possi > 0:
+                    min = sum_possi
+                    position = [i]
+                elif sum_possi == min and sum_possi > 0:
+                    position.append(i)
+            return position
 
     def AC3(self, pos, val) :
-        self.modifPossiLigne(pos[0], val)
-        self.modifPossiCol(pos[1], val)
-        self.modifPossiCarre(pos, val)
+        self.modifPossiLigne(pos[0], val, 0)
+        self.modifPossiCol(pos[1], val, 0)
+        self.modifPossiCarre(pos, val, 0)
+
+    def InvAC3(self, pos, val) :
+        self.modifPossiLigne(pos[0], val, 1)
+        self.modifPossiCol(pos[1], val, 1)
+        self.modifPossiCarre(pos, val, 1)
+
 
     def compterZeroLigne(self, ligne):
         # On compte le nombre de case dans une ligne où il est impossible de rentrer une valeur
@@ -168,8 +173,7 @@ class Solver:
         return compte
 
     def compterZeroColonne(self, col):
-        possi = self.possibilite[:,col]
-        print(possi)
+        possi = self.possibilite[:][col]
         compte = 0
         for k in range(len(possi)):
             if possi[k].count(0) == 9:
@@ -210,10 +214,9 @@ class Solver:
 
     def sommerPossiCarre(self, num_carre):
         s = 0
-        carre = np.array(self.getCarre(num_carre))
-        for i in range(len(carre)):
-            for j in i :
-                s += sum(j)                    
+        carre = self.getCarre(num_carre)
+        for i in carre:
+            s += sum(i)                    
         return s
 
     def indicesMax(self, tableau):
@@ -235,61 +238,119 @@ class Solver:
         return position
 
 
-    def degreeHeuristic(self):
+    def degreeHeuristic(self, arg):
         # A TESTER
         nbre_contrainte = [[0 for i in range(9)] for i in range(9)]
-        for i in range(len(self.sudoku)):
-            for j in range(len(self.sudoku)):
-                num_carre = self.retrouveCarre(i, j)
-                # PROBLEME PAR LA A MON AVIS
-                calcul_contrainte = self.compterZeroColonne(j) + self.compterPZeroLigne(i)
-                calcul_contrainte += self.sommerZeroCarre(num_carre)
-                calcul_contrainte += -8 * 3 - np.sum(self.possibilite[i][j])
-                calcul_contrainte += self.sommerPossiLigne(i) + self.sommerPossiCol(j) + self.sommerPossiCarre(
-                    num_carre)
-                nbre_contrainte[i][j] = calcul_contrainte
-        return self.indiceMin(nbre_contrainte)
+        for k in range(len(arg)):
+            i = arg[k][0]
+            j=arg[k][1]
+            num_carre = self.retrouveCarre(arg[k][0], arg[k][1])
+            # PROBLEME PAR LA A MON AVIS
+            calcul_contrainte = self.compterZeroColonne(j) + self.compterZeroLigne(i)
+            calcul_contrainte += self.sommerZeroCarre(num_carre)
+            calcul_contrainte += -8 * 3 - np.sum(self.possibilite[i][j])
+            calcul_contrainte += self.sommerPossiLigne(i) + self.sommerPossiCol(j) + self.sommerPossiCarre(
+                num_carre)
+            nbre_contrainte[i][j] = calcul_contrainte
+        return self.indicesMin(nbre_contrainte)
 
-    def leastConstraining(self):
+    def leastConstraining(self, arg):
         # A TESTER
         nbre_contrainte = [[0 for i in range(9)] for i in range(9)]
-        for i in range(len(self.sudoku)):
-            for j in range(len(self.sudoku)):
-                num_carre = self.retrouveCarre(i, j)
-                # PROBLEME PAR LA A MON AVIS
-                calcul_contrainte = self.compterZeroColonne(j) + self.compterPZeroLigne(i)
-                calcul_contrainte += self.sommerZeroCarre(num_carre)
-                calcul_contrainte += -8 * 3 - np.sum(self.possibilite[i][j])
-                calcul_contrainte += self.sommerPossiLigne(i) + self.sommerPossiCol(j) + self.sommerPossiCarre(
-                    num_carre)
-                nbre_contrainte[i][j] = calcul_contrainte
-        return self.indiceMax(nbre_contrainte)
+        for k in range(len(arg)):
+            i = arg[k][0]
+            j = arg[k][1]
+            num_carre = self.retrouveCarre(i, j)
+            # PROBLEME PAR LA A MON AVIS
+            calcul_contrainte = self.compterZeroColonne(j) + self.compterZeroLigne(i)
+            calcul_contrainte += self.sommerZeroCarre(num_carre)
+            calcul_contrainte += -8 * 3 - np.sum(self.possibilite[i][j])
+            calcul_contrainte += self.sommerPossiLigne(i) + self.sommerPossiCol(j) + self.sommerPossiCarre(num_carre)
+            nbre_contrainte[i][j] = calcul_contrainte
+        return self.indicesMax(nbre_contrainte)
+
+    def recu(self, pos) :
+        print('commencement')
+        for i in range(9) :
+            if self.possibilite[pos[0]][pos[1]][i-1] == 1 :
+                self.sudoku[pos[0]][pos[1]] = i
+                self.AC3(pos, i)
+                print('back suivant')
+                if self.Backtracking() :
+                    print('finiiii')
+                    return True  
+                print('RETOUUUUUUUUUUR')
+                print(pos)
+                print(i)
+                print(self.possibilite[pos[0]][pos[1]])
+                self.printPossibilites()
+                self.sudoku[pos[0]][pos[1]] = 0
+                self.InvAC3(pos, i)
+                return False       
+
+    def Backtracking(self) :
+        zeros = self.zero_sudo()
+        if len(zeros) == 0 :
+            print('finiiii')
+            return True  
+        else : 
+            try :
+                self.recu(self.mrv(zeros)[0])
+            except :
+                try :
+                    self.recu(zeros[0])
+                except :
+                    try :
+                        self.recu(self.leastConstraining(zeros)[0])
+                    except :
+                        self.printSudoku()
+                        return True
+
+
+            """try :
+                self.recu(pos_opti[0])
+            except : 
+                print('zero : {}'.format(zeros))
+                self.printSudoku()
+                print('pos opti : {}'.format(pos_opti))
+                pos_opti = self.degreeHeuristic(pos_opti)
+                if len(pos_opti) == 1 :
+                    self.recu(pos_opti[0])
+
+            
+
+            if len(pos_opti) == 1 :
+                self.recu(pos_opti[0])
+
+            else :
+                pos_opti = self.degreeHeuristic(pos_opti)
+                if len(pos_opti) == 1 :
+                    self.recu(pos_opti[0])
+
+                else : 
+                    pos_opti = self.mrv(pos_opti)
+                    self.recu(pos_opti[0])"""
+        return False
+                
 
 
 if __name__ == "__main__":
     solver = Solver()
-    grille = [[0, 4, 0, 1, 0, 0, 0, 0, 0],
-              [0, 0, 3, 5, 0, 0, 0, 1, 9],
-              [0, 0, 0, 0, 0, 6, 0, 0, 3],
-              [0, 0, 7, 0, 0, 5, 0, 0, 8],
-              [0, 8, 1, 0, 0, 0, 9, 6, 0],
-              [9, 0, 0, 2, 0, 0, 7, 0, 0],
-              [6, 0, 0, 9, 0, 0, 0, 0, 0],
-              [8, 1, 0, 0, 0, 2, 4, 0, 0],
-              [0, 0, 0, 0, 0, 4, 0, 9, 0]]
+    grille = [[7, 3, 4, 0, 0, 0, 0, 0, 1],
+              [0, 5, 0, 0, 9, 8, 0, 0, 3],
+              [0, 9, 0, 0, 1, 4, 0, 5, 2],
+              [3, 0, 2, 4, 0, 6, 8, 0, 0],
+              [0, 0, 9, 1, 0, 3, 2, 0, 0],
+              [0, 0, 5, 9, 0, 2, 6, 0, 4],
+              [9, 2, 0, 5, 6, 0, 0, 4, 0],
+              [1, 0, 0, 2, 4, 0, 0, 9, 0],
+              [5, 0, 0, 0, 0, 0, 1, 2, 7]]
 
     sudoku = [[i for i in range(1, 10)] for i in range(1, 10)]
     solver.ajoutSudoku(grille)
     solver.printSudoku()
     print('\n\n')
-    #solver.modifPossiCarre(8, [4, 4])
-    #solver.printPossibilites()
-    """print('ligne 1 : ' + str(solver.verifLigne(1)))
-    print('colonne 1 : ' + str(solver.verifColonne(1)))
-    print('carre 1 : ' + str(solver.verifCarre(1)))
-    print('possibilites : ')    
-    print(solver.possibilite)
-    print(solver.sommerValeursPossibles())"""
     solver.InitPossi()
-    print(solver.possibilite[4][3])
-    solver.printPossibilites()
+    print('\n\n')
+    solver.Backtracking()
+    solver.printSudoku()
