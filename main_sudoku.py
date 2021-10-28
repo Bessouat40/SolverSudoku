@@ -11,6 +11,74 @@ board = [
 ]
 
 
+def ac3(pos, val, possibilite):
+    possibilite=modifPossiLigne(pos[0], val, 0, possibilite)
+    possibilite= modifPossiCol(pos[1], val, 0, possibilite)
+    possibilite = modifPossiCarre(pos, val, 0, possibilite)
+    return possibilite
+
+
+def invAC3(pos, val, possibilite):
+    possibilite=modifPossiLigne(pos[0], val, 1,possibilite)
+    possibilite=modifPossiCol(pos[1], val, 1,possibilite)
+    possibilite=modifPossiCarre(pos, val, 1,possibilite)
+    return possibilite
+
+def createPossibilities(board) :
+    possibilite = [[[1 for i in range(1, 10)] for i in range(9)] for i in range(9)]
+    for i in range (len(board)) :
+        for j in range (len(board)):
+            if board[i][j]!=0 :
+                possibilite[i][j]=[0 for i in range(9)]
+                possibilite = modifPossiLigne(i,board[i][j],0,possibilite)
+                possibilite = modifPossiCol(j,board[i][j],0, possibilite)
+                possibilite = modifPossiCarre([i,j],board[i][j], 0, possibilite)
+    return possibilite
+
+def modifPossiLigne(ligne, val, remp, possibilite):
+    # On modofie les posisbilité de la ligne en fonction de la valeur posée
+    possi = possibilite[ligne]
+    for i in range(len(possi)):
+        x = possi[i]
+        x[val - 1] = remp  # val-1 car on commence à 0
+        possi[i] = x
+    possibilite[ligne] = possi
+    return possibilite
+
+def modifPossiCol( col, val, remp, possibilite):
+    for i in range(len(possibilite)):
+        possibilite[i][col][val-1]=remp
+    return possibilite
+
+def modifPossiCarre( pos, val, remp, possibilite):
+    num_carre = retrouveCarre(pos[0], pos[1])
+    carre = getCarre(num_carre, possibilite)
+    indice = getIndicesCarre(num_carre)
+    for i in range (len(carre)) :
+        carre[i][val-1]=remp
+    for j in range (len(carre)) :
+        possibilite[indice[j][1]][indice[j][0]]=carre[j]
+    return possibilite
+
+def getIndicesCarre(n):
+    n2 = n - 1
+    x = (n2 % 3) * 3
+    y = (n2 // 3) * 3
+    indices = [[y + i, x + j] for i in range(3) for j in range(3)]
+    return indices
+
+def getCarre( i, possibilite):
+    indices = getIndicesCarre(i)
+    sudoku = possibilite
+    carre = []
+    for l in indices:
+        carre.append(sudoku[l[1]][l[0]])
+    return carre
+
+def retrouveCarre( x, y):
+    carre = (y // 3) * 3 + 1 + x // 3
+    return carre
+
 def solve(bo):
     find = find_empty(bo)
     if not find:
