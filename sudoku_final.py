@@ -1,17 +1,16 @@
 import numpy as np
-import sys
 
-from numpy.core.numeric import indices
+import matplotlib.pyplot as plt
+from matplotlib.collections import LineCollection
+from matplotlib.colors import ListedColormap
 
 class Solver:
+
     def __init__(self, sudoku=[[0 for i in range(9)] for i in range(9)]):
         self.sudoku = sudoku
-        self.possibilite = [[[1 for i in range(1, 10)] for i in range(9)] for i in range(9)]
-        self.count = 0
-        self.fixe = [[] for i in range(9)]
 
     def ajouterSudoku(self):
-        print("Veillez entrer le sudoku ligne par ligne en séparant les chiffres par des virgules")
+        print("\n Veuillez entrer le sudoku ligne par ligne en séparant les chiffres par des virgules")
         print("(Remplacer les cases vide par la valeur 0 SVP)")
         grid = []
         while len(grid) < 9:
@@ -25,29 +24,32 @@ class Solver:
                 print("Entrer une ligne conforme SVP")
         return grid
 
-    def InitPossi(self) :
-        for i in range(len(self.sudoku)) :
-            for j in range(len(self.sudoku[0])) :
-                self.fixe[i].append(self.sudoku[i][j])
-                if self.sudoku[i][j] != 0 :
-                    self.possibilite[i][j] = [0 for i in range(9)]
-                    val = self.sudoku[i][j]
-                    pos = [i,j]
-                    self.AC3(pos, val)
+    def displaySudoku(self, grid):
+        cmap = ListedColormap(['w'])
+        fig, ax = plt.subplots()
+        # Using matshow here just because it sets the ticks up nicely. imshow is faster.
+        ax.matshow(grid, cmap=cmap)
+
+        for (i, j), z in np.ndenumerate(grid):
+            ax.text(j, i, z, ha='center', va='center')
+        c1 = [[(.5 + k, -3), (.5 + k, 9)] for k in range(11)]
+        c2 = [[(-3, .5 + k), (9, .5 + k)] for k in range(11)]
+        colec = c1 + c2
+        lc = LineCollection(colec, color=["k"], lw=1)
+        c1 = [[(-3.5 + 3*k, -3), (-3.5 + 3*k, 9)] for k in range(4)]
+        c2 = [[(-3, -3.5 + 3*k), (9, -3.5 + 3*k)] for k in range(4)]
+        colec2 = c1+c2
+        lc2 = LineCollection(colec2, color=["k"], lw=2)
+        ax.set_yticklabels([])
+        ax.set_xticklabels([])
+        ax.set_xticks([])
+        ax.set_yticks([])
+        plt.gca().add_collection(lc)
+        plt.gca().add_collection(lc2)
+        plt.show()
 
     def getSudoku(self):
         return self.sudoku
-
-    def getPossibilites(self):
-        return self.possibilite
-
-    def getCarre(self, i):
-        indices = self.getIndicesCarre(i)
-        sudoku = self.getPossibilites()
-        carre = []
-        for l in indices:
-            carre.append(sudoku[l[1]][l[0]])
-        return carre
 
     def getIndicesCarre(self, n):
         n2 = n - 1
@@ -76,50 +78,17 @@ class Solver:
                 res+=' '
             print(res+'|')
 
-    def printPossibilites(self):
-        for i in self.getPossibilites():
-            print(i)
-        print('\n')
-
-
     def ajoutSudoku(self, sudoku):
         if len(sudoku) != 9 or len(sudoku[0]) != 9:
             print("La taille du sodoku n'est pas conforme. Veuillez rentrer une grille de taille 9x9.")
         else:
             self.sudoku = sudoku
 
-    def modifPossiLigne(self, ligne, val, remp):
-        # On modofie les posisbilité de la ligne en fonction de la valeur posée
-        possi = self.possibilite[ligne]
-        for i in range(len(possi)):
-            x = possi[i]
-            x[val - 1] = remp  # val-1 car on commence à 0
-            possi[i] = x
-        self.possibilite[ligne] = possi
-
-    def modifPossiCol(self, col, val, remp):
-        for i in range(len(self.possibilite)):
-            self.possibilite[i][col][val-1]=remp
-
     def retrouveCarre(self, x, y):
         ligne = [[1,2,3], [4,5,6], [7,8,9]]
         colonne = [[1,4,7], [2,5,8], [3,6,9]]
         comm = list(set(ligne[x//3]).intersection(colonne[y//3]))[0]
         return comm
-
-    def posCarre(self, nb_carre):
-        x = ((nb_carre - 1) % 3) * 3
-        y = (((nb_carre - 1) // 3)) * 3
-        return x, y
-
-    def modifPossiCarre(self, pos, val, remp):
-        num_carre = self.retrouveCarre(pos[0], pos[1])
-        carre = self.getCarre(num_carre)
-        indice = self.getIndicesCarre(num_carre)
-        for i in range (len(carre)) :
-            carre[i][val-1]=remp
-        for j in range (len(carre)) :
-            self.possibilite[indice[j][1]][indice[j][0]]=carre[j]
 
     def mrv(self, zeros) :
         pos = []
@@ -144,11 +113,6 @@ class Solver:
                 pos.append(i)
             
         return pos
-
-    def AC3(self, pos, val) :
-        self.modifPossiLigne(pos[0], val, 0)
-        self.modifPossiCol(pos[1], val, 0)
-        self.modifPossiCarre(pos, val, 0)
 
     def degreeHeuristic(self, zeros) :
         pos = []
@@ -198,48 +162,20 @@ class Solver:
     def possible(self, pos, val) :
         return self.possible_col(pos, val) and self.possible_carre(pos, val) and self.possible_ligne(pos, val)
 
-
-    def solve(self) :
+    def Backtracking(self) :
         find = self.zero_sudo()
         if len(find) == 0 :
-            return True
-        else:
-            l = self.mrv(find)[0] # rajout
-            #row, col = find[0]
-            row, col = l[0]
-        for i in range(1,10):
-            if self.possibilite[row][col][i-1]==1:
-                print('i : ',i)
-                print('possibilite : ', self.possibilite)
-                print('pos : ',[row,col])
-                self.printSudoku()
-                self.sudoku[row][col] = i
-                self.AC3([row,col],i)
-                if self.solve() :
-                    return True
-                self.InvAC3([row,col],i)
-                self.sudoku[row][col] = 0
-        return False
-
-    def solve2(self) :
-        find = self.zero_sudo()
-        print('find : ', find)
-        if len(find) == 0 :
-            print('finito pipo')
             return True
         else : 
             l = self.mrv(find) 
-            print('l mrv : ',l)
             if len(l) != 0 :
                 l = self.degreeHeuristic(l)
-                print('l DH : ',l)
             row, col = l[0]
         for i in range(1,10):
             if self.possible([row,col],i) :
                 self.sudoku[row][col] = i
-                if self.solve2() :
+                if self.Backtracking() :
                     return True
-                #self.AC3([row,col], i)
             self.sudoku[row][col] = 0
         return False
 
@@ -287,12 +223,17 @@ if __name__ == "__main__":
        [0,0,0,0,0,7,0,0,4],
        [1,0,0,4,0,2,3,0,0]]
 
-    solver.ajoutSudoku(board2)
-    grid = solver.ajouterSudoku()
-    solver.ajoutSudoku(grid)
+    print('\n Voulez vous ajouter votre sudoku ? Oui/Non')
+    reponse = input()
+    if reponse == 'Oui' :
+        grid = solver.ajouterSudoku()
+        solver.ajoutSudoku(grid)
+    else :
+        solver.ajoutSudoku(board2)
+        print('\n Voici notre grille par défaut :')
+    print('\n\n ----------Sudoku initial----------\n ')
     solver.printSudoku()
-    print('\n\n')
-    solver.InitPossi()
-    print('\n\n')
-    solver.solve2()
+    solver.Backtracking()
+    print('\n\n -----------Sudoku final-----------\n ')
     solver.printSudoku()
+    solver.displaySudoku(solver.sudoku)
