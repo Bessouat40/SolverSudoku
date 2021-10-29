@@ -6,10 +6,12 @@ class Solver:
         self.sudoku = sudoku
         self.possibilite = [[[1 for i in range(1, 10)] for i in range(9)] for i in range(9)]
         self.count = 0
+        self.fixe = [[] for i in range(9)]
 
     def InitPossi(self) :
         for i in range(len(self.sudoku)) :
             for j in range(len(self.sudoku[0])) :
+                self.fixe[i].append(self.sudoku[i][j])
                 if self.sudoku[i][j] != 0 :
                     self.possibilite[i][j] = [0 for i in range(9)]
                     val = self.sudoku[i][j]
@@ -32,8 +34,8 @@ class Solver:
 
     def getIndicesCarre(self, n):
         n2 = n - 1
-        x = (n2 % 3) * 3
-        y = (n2 // 3) * 3
+        y = (n2 % 3) * 3
+        x = (n2 // 3) * 3
         indices = [[x + i, y + j] for i in range(3) for j in range(3)]
         return indices
 
@@ -95,7 +97,7 @@ class Solver:
 
     def modifPossiLigne(self, ligne, val, remp):
         # On modofie les posisbilité de la ligne en fonction de la valeur posée
-        possi = self.getPossibilites()[ligne]
+        possi = self.possibilite[ligne]
         for i in range(len(possi)):
             x = possi[i]
             x[val - 1] = remp  # val-1 car on commence à 0
@@ -103,23 +105,19 @@ class Solver:
         self.possibilite[ligne] = possi
 
     def modifPossiCol(self, col, val, remp):
-        possi = np.asarray(self.getPossibilites())[:, col]
-        for i in range(len(possi)):
-            x = possi[i]
-            x[val - 1] = remp  # val-1 car on commence à 0
-            possi[i] = x
-            self.possibilite[i][col][val-1]=0
-        # for count, val in enumerate(self.possibilite):
-        #     val[col] = list(possi[count])
+        for i in range(len(self.possibilite)):
+            self.possibilite[i][col][val-1]=remp
 
     def retrouveCarre(self, x, y):
-        carre = (y // 3) * 3 + 1 + x // 3
-        return carre
+        ligne = [[1,2,3], [4,5,6], [7,8,9]]
+        colonne = [[1,4,7], [2,5,8], [3,6,9]]
+        comm = list(set(ligne[x//3]).intersection(colonne[y//3]))[0]
+        return comm
 
     def posCarre(self, nb_carre):
-        x = ((nb_carre - 1)%3)*3
-        y = (((nb_carre-1)//3))*3
-        return x,y
+        x = ((nb_carre - 1) % 3) * 3
+        y = (((nb_carre - 1) // 3)) * 3
+        return x, y
 
     def modifPossiCarre(self, pos, val, remp):
         num_carre = self.retrouveCarre(pos[0], pos[1])
@@ -136,9 +134,6 @@ class Solver:
     def compterZeroSudoku(self, m):
         nb_zeros = len(np.where(m == 0)[0])
         return nb_zeros
-
-    def acTrois(self):
-        None
 
     def mrv(self, arg):
             min = 10000
@@ -161,6 +156,11 @@ class Solver:
         self.modifPossiLigne(pos[0], val, 1)
         self.modifPossiCol(pos[1], val, 1)
         self.modifPossiCarre(pos, val, 1)
+        for i in range(len(self.sudoku)) :
+            for j in range(len(self.sudoku[0])) :
+                if self.fixe[i][j] != 0 :
+                    self.possibilite[i][j] = [0 for i in range(9)]
+
 
 
     def compterZeroLigne(self, ligne):
@@ -269,70 +269,112 @@ class Solver:
             nbre_contrainte[i][j] = calcul_contrainte
         return self.indicesMax(nbre_contrainte)
 
+    def possible_col(self, pos, val) :
+        col = np.asarray(self.sudoku)[:,pos[1]]
+        return not(val in col)
+    
+    def possible_ligne(self, pos, val) :
+        ligne = np.asarray(self.sudoku)[pos[0]]
+        return not(val in ligne)
+
+    def possible_carre(self, pos, val) :
+        num_carre = self.retrouveCarre(pos[0], pos[1])
+        indice = self.getIndicesCarre(num_carre)
+        res = []
+        for i in indice :
+            res.append(self.sudoku[i[0]][i[1]])
+        return not(val in res)
+
+    def possible(self, pos, val) :
+        return self.possible_col(pos, val) and self.possible_carre(pos, val) and self.possible_ligne(pos, val)
+
+
+    def solve(self) :
+        find = self.zero_sudo()
+        if len(find) == 0 :
+            return True
+        else:
+            row, col = find[0]
+        for i in range(1,10):
+            if self.possibilite[row][col][i-1]==1:
+                print('i : ',i)
+                print('possibilite : ', self.possibilite)
+                print('pos : ',[row,col])
+                self.printSudoku()
+                self.sudoku[row][col] = i
+                self.AC3([row,col],i)
+                if self.solve() :
+                    return True
+                self.InvAC3([row,col],i)
+                self.sudoku[row][col] = 0
+        return False
+
+    """def solve(self) :
+        find = self.zero_sudo()
+        if len(find) == 0 :
+            print('finito pipo')
+            return True
+        else : 
+            row, col = find[0]
+        for i in range(1,10):
+            possi = self.possibilite[row][col][i-1]
+            if possi==1 :
+                print('coucou')
+                print(self.possibilite)
+                self.sudoku[row][col] = i
+                self.AC3([row,col],i)
+                #self.printSudoku()
+                if self.solve() :
+                    return True
+                else :
+                    self.sudoku[row][col] = 0
+                    self.InvAC3([row,col],i)
+        return False"""
+
+
+    def solve2(self) :
+        find = self.zero_sudo()
+        if len(find) == 0 :
+            print('finito pipo')
+            return True
+        else : 
+            row, col = find[0]
+        for i in range(1,10):
+            if self.possible([row,col],i) :
+                self.sudoku[row][col] = i
+                if self.solve2() :
+                    return True
+            self.sudoku[row][col] = 0
+        return False
+
     def recu(self, pos) :
-        print('commencement')
-        for i in range(9) :
+        for i in range(1,10) :
             if self.possibilite[pos[0]][pos[1]][i-1] == 1 :
                 self.sudoku[pos[0]][pos[1]] = i
                 self.AC3(pos, i)
-                print('back suivant')
                 if self.Backtracking() :
-                    print('finiiii')
+                    print('fin recu')
+                    self.printSudoku()
                     return True  
-                print('RETOUUUUUUUUUUR')
-                print(pos)
-                print(i)
-                print(self.possibilite[pos[0]][pos[1]])
-                self.printPossibilites()
+                
                 self.sudoku[pos[0]][pos[1]] = 0
                 self.InvAC3(pos, i)
-                return False       
 
     def Backtracking(self) :
+        self.count += 1
+        if self.count % 15000 == 0 :
+            self.printSudoku()
+            print(self.count)
+
         zeros = self.zero_sudo()
         if len(zeros) == 0 :
             print('finiiii')
             return True  
+
         else : 
-            try :
-                self.recu(self.mrv(zeros)[0])
-            except :
-                try :
-                    self.recu(zeros[0])
-                except :
-                    try :
-                        self.recu(self.leastConstraining(zeros)[0])
-                    except :
-                        self.printSudoku()
-                        return True
+            self.recu(zeros[0])
 
-
-            """try :
-                self.recu(pos_opti[0])
-            except : 
-                print('zero : {}'.format(zeros))
-                self.printSudoku()
-                print('pos opti : {}'.format(pos_opti))
-                pos_opti = self.degreeHeuristic(pos_opti)
-                if len(pos_opti) == 1 :
-                    self.recu(pos_opti[0])
-
-            
-
-            if len(pos_opti) == 1 :
-                self.recu(pos_opti[0])
-
-            else :
-                pos_opti = self.degreeHeuristic(pos_opti)
-                if len(pos_opti) == 1 :
-                    self.recu(pos_opti[0])
-
-                else : 
-                    pos_opti = self.mrv(pos_opti)
-                    self.recu(pos_opti[0])"""
         return False
-                
-
 
 if __name__ == "__main__":
     solver = Solver()
@@ -346,11 +388,10 @@ if __name__ == "__main__":
               [1, 0, 0, 2, 4, 0, 0, 9, 0],
               [5, 0, 0, 0, 0, 0, 1, 2, 7]]
 
-    sudoku = [[i for i in range(1, 10)] for i in range(1, 10)]
     solver.ajoutSudoku(grille)
     solver.printSudoku()
     print('\n\n')
     solver.InitPossi()
     print('\n\n')
-    solver.Backtracking()
+    solver.solve()
     solver.printSudoku()
